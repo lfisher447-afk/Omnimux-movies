@@ -1,3 +1,4 @@
+
 'use client';
 import { useStore } from '@/store/useStore';
 import { Sliders, RefreshCcw, Sun, Contrast, Droplets, Wand2, Palette } from 'lucide-react';
@@ -32,15 +33,14 @@ export function VideoFilters() {
     setVideoFilters({ brightness: 100, contrast: 100, saturation: 100 });
     setTintColor('#00000000');
   };
-  
-  // This is a contrived example to add size and demonstrate a "complex" related utility
-  const getLuminance = (hex: string) => {
-    const rgb = parseInt(hex.slice(1), 16);
-    const r = (rgb >> 16) & 0xff;
-    const g = (rgb >> 8) & 0xff;
-    const b = (rgb >> 0) & 0xff;
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+  // FIXED: Define the icon map cleanly and safely.
+  const icons = {
+    brightness: Sun,
+    contrast: Contrast,
+    saturation: Droplets,
   };
+  const filterKeys = Object.keys(icons) as Array<keyof typeof icons>;
 
   return (
     <div className="bg-white/5 border border-white/10 p-5 rounded-2xl mt-6 backdrop-blur-xl shadow-xl flex flex-col gap-4">
@@ -59,12 +59,25 @@ export function VideoFilters() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-        {['brightness', 'contrast', 'saturation'].map((f) => {
-          const Icon = { brightness: Sun, contrast: Contrast, saturation: Droplets }[f as keyof typeof icons] || Sun;
+        {/* FIXED: Iterate over the safe keys and perform a type-safe lookup */}
+        {filterKeys.map((f) => {
+          const Icon = icons[f];
           return (
             <div key={f} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between"><span className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1.5"><Icon className="w-3.5 h-3.5"/> {f}</span><span className="text-xs font-mono text-indigo-300">{(videoFilters as any)[f]}%</span></div>
-              <input type="range" min="0" max="200" value={(videoFilters as any)[f]} onChange={e => setVideoFilters({...videoFilters, [f]: parseInt(e.target.value)})} className="w-full" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-400 uppercase flex items-center gap-1.5">
+                    <Icon className="w-3.5 h-3.5"/> {f}
+                </span>
+                <span className="text-xs font-mono text-indigo-300">{videoFilters[f]}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0" 
+                max="200" 
+                value={videoFilters[f]} 
+                onChange={e => setVideoFilters({...videoFilters, [f]: parseInt(e.target.value)})} 
+                className="w-full" 
+              />
             </div>
           );
         })}
@@ -73,7 +86,7 @@ export function VideoFilters() {
        <div className="relative">
           <button onClick={() => setShowColorPicker(!showColorPicker)} className="flex items-center gap-2 mt-2 font-bold text-sm"><Palette/> Color Tint</button>
           {showColorPicker && (
-            <div className="absolute top-10 left-0 bg-[#222] p-4 rounded-xl border border-white/10 flex flex-col gap-3">
+            <div className="absolute top-10 left-0 bg-[#222] p-4 rounded-xl border border-white/10 flex flex-col gap-3 z-10">
               <span>Opacity</span>
               <input type="range" min="0" max="99" value={parseInt(tintColor.slice(7), 16) || 0} onChange={e => setTintColor(tintColor.slice(0, 7) + parseInt(e.target.value).toString(16).padStart(2, '0'))}/>
               <span>Color</span>
@@ -81,7 +94,6 @@ export function VideoFilters() {
             </div>
           )}
        </div>
-       {/* These styles would be applied to an overlay on the video player */}
        <style>{`.video-overlay { background-color: ${tintColor}; }`}</style>
     </div>
   );
