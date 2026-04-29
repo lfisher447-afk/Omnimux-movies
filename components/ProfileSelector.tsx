@@ -1,126 +1,112 @@
 'use client';
 import { useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { Plus, User, Lock, Trash2, Pencil, X } from 'lucide-react'; // FIXED: Added 'X' to the import list
+import { Plus, Lock, Trash2, Pencil, X } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 
-const GridPattern = () => (
-  <svg width="100%" height="100%" className="absolute inset-0 z-0 opacity-5 pointer-events-none">
-    <defs><pattern id="p" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0 L0 0 0 30" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5"/></pattern></defs>
-    <rect width="100%" height="100%" fill="url(#p)"/>
-  </svg>
-);
-
 export function ProfileSelector() {
-  const { profiles, activeProfile, setProfile, addProfile } = useStore();
+  const { profiles, setProfile, addProfile } = useStore();
   const [mode, setMode] = useState<'select' | 'add' | 'manage'>('select');
   const [pinTarget, setPinTarget] = useState<any>(null);
-  const [pin, setPin] = useState('');
+  const[pin, setPin] = useState('');
   const [newName, setNewName] = useState('');
 
-  if (activeProfile) return null;
-
   const handlePinSubmit = () => {
-    if (pin === (pinTarget.pin || '1234')) {
-      setProfile(pinTarget);
-    } else {
-      alert('Incorrect PIN');
-      setPin('');
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.8, y: 20 },
-    visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 100 } },
+    if (pin === (pinTarget.pin || '1234')) setProfile(pinTarget);
+    else { alert('Incorrect Security PIN'); setPin(''); }
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[99999] bg-[#030508]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-4 overflow-y-auto">
-      <GridPattern />
-      <div className="text-center mb-12 relative z-10">
-        <motion.h1 layoutId="title" className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-t from-gray-400 to-white mb-3">
-          {mode === 'manage' ? "Manage Profiles" : "Who's Exploring?"}
+    <motion.div exit={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }} className="fixed inset-0 z-[99999] bg-[#030508] flex flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Dynamic Background */}
+      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-indigo-600/10 blur-[150px] rounded-full mix-blend-screen animate-pulse-glow pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-purple-600/10 blur-[150px] rounded-full mix-blend-screen animate-pulse-glow pointer-events-none" style={{ animationDelay: '2s' }} />
+
+      <div className="text-center mb-16 relative z-10">
+        <motion.h1 layoutId="title" className="text-5xl md:text-7xl font-black tracking-tighter text-white drop-shadow-2xl mb-4">
+          {mode === 'manage' ? "Manage Access" : "Who's Exploring?"}
         </motion.h1>
-        <AnimatePresence mode="wait">
-          <motion.p key={mode} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-xl text-gray-400 max-w-xl mx-auto">
-            {mode === 'select' && "Choose your profile to sync your watchlist, history, and achievements."}
-            {mode === 'add' && "Create a new profile. The avatar is generated from the name."}
-            {mode === 'manage' && "Click on a profile to edit or remove it. Changes are saved automatically."}
-          </motion.p>
-        </AnimatePresence>
+        <p className="text-xl text-gray-400 max-w-xl mx-auto font-medium">
+          {mode === 'select' && "Select a neural profile to synchronize configurations."}
+          {mode === 'add' && "Initialize a new neural link identity."}
+          {mode === 'manage' && "Modify or terminate local accounts globally."}
+        </p>
       </div>
 
       <LayoutGroup>
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex gap-8 flex-wrap justify-center items-start max-w-5xl relative z-10">
+        <motion.div className="flex gap-8 flex-wrap justify-center items-start max-w-5xl relative z-10">
           {profiles.map(p => (
-            <motion.div layout key={p.id} variants={itemVariants} className="flex flex-col items-center group">
+            <motion.div layout key={p.id} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center group">
               <motion.button
                 layoutId={`profile-${p.id}`}
-                whileHover={{ scale: 1.05, y: -15 }}
+                whileHover={{ scale: 1.05, y: -10 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => (mode === 'select' ? (p.pin ? setPinTarget(p) : setProfile(p)) : {})}
-                className="relative w-40 h-40 rounded-3xl border-2 border-white/10 group-hover:border-indigo-500 transition-all duration-300 bg-gradient-to-br from-white/10 to-transparent p-1 shadow-2xl"
+                className="relative w-40 h-40 rounded-3xl border-2 border-white/5 hover:border-indigo-500/50 transition-all duration-500 bg-black shadow-2xl overflow-hidden"
               >
-                <img src={p.avatar} className="w-full h-full rounded-[22px] object-cover" alt={p.name} />
-                {p.pin && mode === 'select' && <Lock className="absolute bottom-2 right-2 w-5 h-5 text-white bg-black/50 p-1 rounded-full" />}
+                <img src={p.avatar} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt={p.name} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                {p.pin && mode === 'select' && <Lock className="absolute bottom-3 right-3 w-6 h-6 text-white drop-shadow-md" />}
               </motion.button>
-              {mode === 'manage' && (
-                <div className="flex items-center gap-2 mt-4">
-                  <button className="p-2 bg-white/10 rounded-full hover:bg-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                  <motion.span layoutId={`name-${p.id}`} className="text-xl font-bold">{p.name}</motion.span>
+              
+              {mode === 'manage' ? (
+                <div className="flex items-center gap-3 mt-6 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md">
+                  <button className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  <span className="text-white font-bold">{p.name}</span>
                 </div>
+              ) : (
+                <motion.span layoutId={`name-${p.id}`} className="mt-6 text-2xl text-gray-400 group-hover:text-white font-bold transition-colors tracking-tight">{p.name}</motion.span>
               )}
-              {mode !== 'manage' && <motion.span layoutId={`name-${p.id}`} className="mt-4 text-2xl text-gray-400 group-hover:text-white font-semibold transition-colors">{p.name}</motion.span>}
             </motion.div>
           ))}
 
           {mode !== 'manage' && (
-            <motion.div layout variants={itemVariants} className="flex flex-col items-center">
+            <motion.div layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center group">
               <motion.button
-                whileHover={{ scale: 1.05, y: -15, rotate: 10 }}
+                whileHover={{ scale: 1.05, y: -10 }} whileTap={{ scale: 0.95 }}
                 onClick={() => setMode(mode === 'add' ? 'select' : 'add')}
-                className="w-40 h-40 rounded-3xl border-2 border-dashed border-white/20 hover:border-white/50 transition-all duration-300 bg-white/5 flex items-center justify-center"
+                className="w-40 h-40 rounded-3xl border-2 border-dashed border-white/20 group-hover:border-white/50 transition-all duration-500 bg-white/5 flex items-center justify-center backdrop-blur-sm"
               >
                 <AnimatePresence mode="wait">
-                  <motion.div key={mode} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.5, opacity: 0 }}>
-                    {mode === 'add' ? <X className="w-12 h-12 text-white" /> : <Plus className="w-12 h-12 text-white/50" />}
+                  <motion.div key={mode} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} transition={{ type: 'spring' }}>
+                    {mode === 'add' ? <X className="w-12 h-12 text-white" /> : <Plus className="w-12 h-12 text-gray-400 group-hover:text-white transition-colors" />}
                   </motion.div>
                 </AnimatePresence>
               </motion.button>
-              <span className="mt-4 text-2xl font-semibold text-gray-500">{mode === 'add' ? 'Cancel' : 'Add Profile'}</span>
+              <span className="mt-6 text-2xl font-bold text-gray-600 group-hover:text-gray-400 transition-colors">{mode === 'add' ? 'Abort' : 'Add Profile'}</span>
             </motion.div>
           )}
         </motion.div>
       </LayoutGroup>
 
       {mode === 'add' && (
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="mt-8 w-full max-w-sm flex gap-3 p-3 bg-white/10 rounded-2xl border border-white/20">
-          <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Enter profile name..." className="flex-1 bg-transparent text-lg text-white outline-none px-2" />
-          <button onClick={() => { addProfile({id: Date.now().toString(), name: newName, avatar:`https://api.dicebear.com/7.x/avataaars/svg?seed=${newName}`}); setNewName(''); setMode('select'); }} className="px-6 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-300 transition">Create</button>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-12 w-full max-w-md flex gap-3 p-2 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl">
+          <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === 'Enter' && setNewName('')} placeholder="Enter designation..." className="flex-1 bg-transparent text-xl font-bold text-white outline-none px-4" />
+          <button onClick={() => { if(newName){ addProfile({id: Date.now().toString(), name: newName, avatar:`https://api.dicebear.com/7.x/avataaars/svg?seed=${newName}`}); setNewName(''); setMode('select'); } }} className="px-8 py-4 bg-white text-black font-black rounded-xl hover:bg-gray-200 transition-all">Connect</button>
         </motion.div>
       )}
 
-      <div className="mt-12">
-        <button onClick={() => setMode(mode === 'manage' ? 'select' : 'manage')} className="px-6 py-3 bg-white/10 border border-white/20 rounded-xl flex items-center gap-2 text-gray-300 hover:bg-white/20 hover:text-white transition-all">
-          {mode === 'manage' ? "Done" : <><Pencil className="w-4 h-4" /> Manage Profiles</>}
+      <div className="mt-16 z-20">
+        <button onClick={() => setMode(mode === 'manage' ? 'select' : 'manage')} className="px-8 py-3 bg-white/5 border border-white/10 rounded-full flex items-center gap-2 text-gray-400 hover:bg-white/10 hover:text-white transition-all font-bold tracking-widest uppercase text-sm">
+          {mode === 'manage' ? "Conclude Editing" : <><Pencil className="w-4 h-4" /> Manage Profiles</>}
         </button>
       </div>
 
       <AnimatePresence>
         {pinTarget && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100000]" onClick={() => setPinTarget(null)}>
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} onClick={e => e.stopPropagation()} className="p-8 bg-black/50 border border-white/10 rounded-3xl flex flex-col items-center gap-6">
-              <h2 className="text-2xl font-bold">Enter PIN for {pinTarget.name}</h2>
-              <div className="flex gap-3">
-                {[0, 1, 2, 3].map(i => <div key={i} className={`w-10 h-14 rounded-lg border-2 ${pin.length > i ? 'border-indigo-500 bg-indigo-500/20' : 'border-white/20'}`} />)}
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl flex items-center justify-center z-[100000]" onClick={() => setPinTarget(null)}>
+            <motion.div initial={{ scale: 0.9, y: 20, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 20, opacity: 0 }} onClick={e => e.stopPropagation()} className="p-10 bg-[#0a0a0a] border border-white/10 rounded-3xl flex flex-col items-center gap-8 shadow-2xl">
+              <div className="text-center space-y-2">
+                <Lock className="w-10 h-10 text-indigo-500 mx-auto mb-4" />
+                <h2 className="text-3xl font-black">Authorized Access Required</h2>
+                <p className="text-gray-400">Authenticating as: {pinTarget.name}</p>
               </div>
-              <input type="password" value={pin} onChange={e => setPin(e.target.value.slice(0, 4))} maxLength={4} className="opacity-0 absolute" autoFocus onKeyDown={e => e.key === 'Enter' && handlePinSubmit()} />
+              <div className="flex gap-4">
+                {[0, 1, 2, 3].map(i => <div key={i} className={`w-14 h-16 rounded-xl flex items-center justify-center text-3xl font-black border-2 transition-all ${pin.length > i ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 bg-black text-transparent'}`}>{pin[i] || '•'}</div>)}
+              </div>
+              <input type="password" value={pin} onChange={e => setPin(e.target.value.slice(0, 4))} maxLength={4} className="opacity-0 absolute inset-0 w-full h-full cursor-default" autoFocus onKeyDown={e => e.key === 'Enter' && handlePinSubmit()} />
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </motion.div>
