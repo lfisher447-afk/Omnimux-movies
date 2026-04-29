@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface Profile { id: string; name: string; avatar: string; pin?: string; }
+interface Profile { id: string; name: string; avatar: string; pin?: string; hasBiometrics?: boolean; }
 interface VideoFilters { brightness: number; contrast: number; saturation: number; sepia: number; }
 
 interface AppState {
@@ -13,6 +13,7 @@ interface AppState {
   watchlist: any[];
   history: any[];
   stats: { hoursWatched: number, movies: number, episodes: number };
+  batterySaver: boolean;
   
   setProfile: (p: Profile | null) => void;
   addProfile: (p: Profile) => void;
@@ -22,6 +23,7 @@ interface AppState {
   setVideoFilters: (filters: VideoFilters) => void;
   toggleWatchlist: (m: any) => void;
   addToHistory: (m: any) => void;
+  toggleBatterySaver: () => void;
 }
 
 export const useStore = create<AppState>()(
@@ -34,6 +36,7 @@ export const useStore = create<AppState>()(
       videoFilters: { brightness: 100, contrast: 100, saturation: 100, sepia: 0 },
       watchlist:[], history:[],
       stats: { hoursWatched: 0, movies: 0, episodes: 0 },
+      batterySaver: false,
       
       setProfile: (p) => set({ activeProfile: p }),
       addProfile: (p) => set({ profiles: [...get().profiles, p] }),
@@ -41,6 +44,7 @@ export const useStore = create<AppState>()(
       setThemeColor: (color) => { set({ themeColor: color }); if(typeof document !== 'undefined') document.documentElement.style.setProperty('--theme-color', color); },
       toggleSpoilerFree: () => set({ spoilerFree: !get().spoilerFree }),
       setVideoFilters: (f) => set({ videoFilters: f }),
+      toggleBatterySaver: () => set({ batterySaver: !get().batterySaver }),
       
       toggleWatchlist: (m) => {
         const list = get().watchlist;
@@ -51,9 +55,9 @@ export const useStore = create<AppState>()(
         const h = get().history.filter(x => x.id !== m.id);
         const st = get().stats;
         const newStats = { movies: m.type==='movie' ? st.movies+1 : st.movies, episodes: m.type==='tv' ? st.episodes+1 : st.episodes, hoursWatched: st.hoursWatched + (m.runtime ? m.runtime/60 : 1.0) };
-        set({ history: [{ ...m, watchedAt: Date.now() }, ...h].slice(0, 100), stats: newStats });
+        set({ history:[{ ...m, watchedAt: Date.now(), bookmark: 0 }, ...h].slice(0, 100), stats: newStats });
       }
     }),
-    { name: 'omnimux-system-core-v11' }
+    { name: 'omnimux-system-core-v12' }
   )
 );
