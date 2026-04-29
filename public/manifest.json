@@ -1,0 +1,21 @@
+{
+  "name": "Omnimux Ultimate",
+  "short_name": "Omnimux",
+  "description": "Neural Streaming Multiplex",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030508",
+  "theme_color": "#4f46e5",
+  "icons":[
+    {
+      "src": "https://api.dicebear.com/7.x/shapes/png?seed=Omnimux&size=192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://api.dicebear.com/7.x/shapes/png?seed=Omnimux&size=512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
