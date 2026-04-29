@@ -5,7 +5,6 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
-  swcMinify: true,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
@@ -21,7 +20,7 @@ const nextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Prevent Webpack from freaking out over WebTorrent's Node.js dependencies
+    // If client-side, tell webpack to ignore Node core modules used by WebTorrent/PeerJS
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -29,19 +28,15 @@ const nextConfig = {
         net: false,
         tls: false,
         crypto: false,
+        stream: false,
         os: false,
         path: false,
-        stream: false,
-        constants: false,
       };
     }
-    
-    // WebRTC PeerJS edge-case fix
     config.externals.push({
       "utf-8-validate": "commonjs utf-8-validate",
       bufferutil: "commonjs bufferutil",
     });
-
     return config;
   },
 };
