@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { SERVERS } from '@/lib/servers';
-import { AmbilightPlayer } from '@/components/AmbilightPlayer';
 import { VideoFilters } from '@/components/VideoFilters';
 import { NicoNicoComments } from '@/components/NicoNicoComments';
-import { WebRTCVoice } from '@/components/WebRTCVoice';
 import { EyeOff, Activity, Share2, Server, Star, Calendar, Clock, Loader2, Maximize2, Layers, Users } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+// THE FIX: Dynamically import heavy WebRTC/Canvas components so Vercel SSR ignores them!
+const AmbilightPlayer = dynamic(() => import('@/components/AmbilightPlayer').then(mod => mod.AmbilightPlayer), { ssr: false });
+const WebRTCVoice = dynamic(() => import('@/components/WebRTCVoice').then(mod => mod.WebRTCVoice), { ssr: false });
 
 export default function AdvancedPlayerPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
@@ -22,7 +25,6 @@ export default function AdvancedPlayerPage({ params }: { params: { id: string } 
   const [serverIdx, setServerIdx] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Television Selectors
   const [season, setSeason] = useState(1);
   const [episode, setEpisode] = useState(1);
 
