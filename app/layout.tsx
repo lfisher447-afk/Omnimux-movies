@@ -4,8 +4,7 @@ import { ClientWrapper } from '@/components/ClientWrapper';
 
 export const metadata = {
   title: 'Omnimux Ultimate - 10X Edition',
-  description: 'The definitive streaming platform.',
-  manifest: '/manifest.json',
+  description: 'The definitive neural streaming multiplex.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,10 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(${initOmegaShield.toString()})();` }} />
       </head>
-      <body>
-        <ClientWrapper>
-          {children}
-        </ClientWrapper>
+      <body className="bg-[#030508] text-white selection:bg-indigo-500/30">
+        <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>
   );
