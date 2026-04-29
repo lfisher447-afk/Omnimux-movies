@@ -1,11 +1,9 @@
 import './globals.css';
-import { Navbar } from '@/components/Navbar';
-import { ProfileSelector } from '@/components/ProfileSelector';
-import { GlobalChat } from '@/components/GlobalChat';
 import { initOmegaShield } from '@/lib/omegaShield';
+import { ClientWrapper } from '@/components/ClientWrapper';
 
 export const metadata = {
-  title: 'Omnimux Ultimate - Vercel Edition',
+  title: 'Omnimux Ultimate - 10X Edition',
   description: 'The definitive streaming platform.',
   manifest: '/manifest.json',
 };
@@ -17,10 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `(${initOmegaShield.toString()})();` }} />
       </head>
       <body>
-        <ProfileSelector />
-        <Navbar />
-        {children}
-        <GlobalChat />
+        <ClientWrapper>
+          {children}
+        </ClientWrapper>
       </body>
     </html>
   );
