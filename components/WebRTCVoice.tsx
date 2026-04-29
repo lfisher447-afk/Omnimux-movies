@@ -6,16 +6,14 @@ import { useStore } from '@/store/useStore';
 
 export function WebRTCVoice({ roomCode }: { roomCode: string }) {
   const { activeProfile } = useStore();
-  const[muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(true);
   const [connected, setConnected] = useState(false);
-  const [peers, setPeers] = useState<{ id: string, name: string, stream?: MediaStream }[]>([]);
+  const[peers, setPeers] = useState<{ id: string, name: string, stream?: MediaStream }[]>([]);
   
   const peerInstance = useRef<any>(null);
   const localStream = useRef<MediaStream | null>(null);
-  const audioRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
 
   useEffect(() => {
-    // Dynamic import to prevent SSR crashes with WebRTC
     import('peerjs').then(({ default: Peer }) => {
       const peer = new Peer(`${roomCode}-${activeProfile?.id || Math.random()}`);
       peerInstance.current = peer;
@@ -25,7 +23,6 @@ export function WebRTCVoice({ roomCode }: { roomCode: string }) {
         console.log("📡 WebRTC Uplink Established:", id);
       });
 
-      // Answer incoming calls
       peer.on('call', (call) => {
         if (localStream.current) {
           call.answer(localStream.current);
@@ -48,7 +45,6 @@ export function WebRTCVoice({ roomCode }: { roomCode: string }) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         localStream.current = stream;
         setMuted(false);
-        // Haptic Feedback (Feature #6)
         if (navigator.vibrate) navigator.vibrate(50);
       } catch (err) {
         alert("Microphone access denied by Neural Protocol.");
@@ -85,7 +81,8 @@ export function WebRTCVoice({ roomCode }: { roomCode: string }) {
         {peers.map(peer => (
           <div key={peer.id} className="flex flex-col items-center gap-2">
             {peer.stream && (
-               <audio autoPlay ref={(el) => { if(el) el.srcObject = peer.stream; }} className="hidden"/>
+               {/* FIX: Tell TypeScript to fallback to null if peer.stream is undefined */}
+               <audio autoPlay ref={(el) => { if (el) el.srcObject = peer.stream || null; }} className="hidden"/>
             )}
             <div className="w-16 h-16 rounded-2xl ring-1 ring-indigo-500/50 flex items-center justify-center overflow-hidden relative">
               <div className="absolute inset-0 bg-indigo-500/20 animate-pulse"></div>
