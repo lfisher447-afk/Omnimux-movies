@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { Plus, User, Lock, Trash2, Pencil } from 'lucide-react';
+import { Plus, User, Lock, Trash2, Pencil, X } from 'lucide-react'; // FIXED: Added 'X' to the import list
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 
-// Complex SVG background to add visual richness and file size
 const GridPattern = () => (
   <svg width="100%" height="100%" className="absolute inset-0 z-0 opacity-5 pointer-events-none">
     <defs><pattern id="p" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0 L0 0 0 30" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5"/></pattern></defs>
@@ -22,7 +21,6 @@ export function ProfileSelector() {
   if (activeProfile) return null;
 
   const handlePinSubmit = () => {
-    // In a real app, this would be a secure check.
     if (pin === (pinTarget.pin || '1234')) {
       setProfile(pinTarget);
     } else {
@@ -42,7 +40,7 @@ export function ProfileSelector() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[99999] bg-[#030508] bg-opacity-95 backdrop-blur-3xl flex flex-col items-center justify-center p-4 overflow-y-auto">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[99999] bg-[#030508]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-4 overflow-y-auto">
       <GridPattern />
       <div className="text-center mb-12 relative z-10">
         <motion.h1 layoutId="title" className="text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-t from-gray-400 to-white mb-3">
