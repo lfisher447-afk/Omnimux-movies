@@ -1,13 +1,13 @@
 'use client';
 import { useStore } from '@/store/useStore';
-import { Waves, RefreshCcw, AudioLines, SurroundSound } from 'lucide-react';
+import { Waves, RefreshCcw, AudioLines, Headphones } from 'lucide-react';
 
 const EQ_FREQS =[60, 230, 910, 3600, 14000];
-const presets = [
+const presets =[
   { name: 'Flat', values: { bands:[0, 0, 0, 0, 0], spatialAudio: false, preset: 'Flat' } },
   { name: 'Dolby Atmos', values: { bands:[6, 2, 0, 4, 7], spatialAudio: true, preset: 'Dolby Atmos' } },
   { name: 'Bass Boost', values: { bands:[8, 5, 0, -2, -2], spatialAudio: false, preset: 'Bass Boost' } },
-  { name: 'Vocal Clarity', values: { bands: [-2, -1, 3, 4, 1], spatialAudio: false, preset: 'Vocal Clarity' } },
+  { name: 'Vocal Clarity', values: { bands:[-2, -1, 3, 4, 1], spatialAudio: false, preset: 'Vocal Clarity' } },
 ];
 
 export function AudioFilters() {
@@ -49,7 +49,7 @@ export function AudioFilters() {
         <button 
             onClick={() => setAudioFilters({ spatialAudio: !audioFilters.spatialAudio })} 
             className={`ml-auto px-5 py-2 text-xs font-black uppercase tracking-widest border rounded-xl transition-all duration-300 shadow-lg flex items-center gap-2 ${audioFilters.spatialAudio ? 'bg-indigo-600 text-white border-indigo-500 shadow-[0_0_20px_rgba(79,70,229,0.5)] scale-105' : 'bg-black text-gray-500 border-white/10 hover:border-indigo-500 hover:text-white'}`}>
-            <SurroundSound className={`w-4 h-4 ${audioFilters.spatialAudio ? 'animate-pulse' : ''}`}/> 
+            <Headphones className={`w-4 h-4 ${audioFilters.spatialAudio ? 'animate-pulse' : ''}`}/> 
             Atmos 3D
         </button>
       </div>
