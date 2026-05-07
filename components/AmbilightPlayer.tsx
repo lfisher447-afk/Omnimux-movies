@@ -1,50 +1,122 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { Play, Pause, Volume2, VolumeX, Maximize, PictureInPicture, Download, Magnet } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, PictureInPicture, Magnet } from 'lucide-react';
 import Hls from 'hls.js';
 
 export function AmbilightPlayer({ src, type }: { src: string, type: 'iframe' | 'direct' | 'torrent' }) {
-  const { videoFilters } = useStore();
+  const { videoFilters, audioFilters } = useStore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Real-time Audio DSP Context Refs
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const eqNodesRef = useRef<BiquadFilterNode[]>([]);
+  const atmosWidenerRef = useRef<GainNode | null>(null);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(1);
-  const[isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const [magnetInput, setMagnetInput] = useState('');
   const [torrentStatus, setTorrentStatus] = useState('');
 
   const filterString = `brightness(${videoFilters.brightness}%) contrast(${videoFilters.contrast}%) saturate(${videoFilters.saturation}%) sepia(${videoFilters.sepia}%)`;
 
-  // 1. True Canvas Ambilight Logic
+  // 1. DSP AUDIO EQUALIZER (Web Audio API Initialization)
+  const initializeAudioDSP = () => {
+    if (audioCtxRef.current || !videoRef.current || type === 'iframe') return;
+
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+
+      const source = ctx.createMediaElementSource(videoRef.current);
+      
+      // Setup 5 EQ Bands
+      const freqs =[60, 230, 910, 3600, 14000];
+      const filters = freqs.map(f => {
+        const filter = ctx.createBiquadFilter();
+        filter.type = f < 100 ? 'lowshelf' : f > 10000 ? 'highshelf' : 'peaking';
+        filter.frequency.value = f;
+        return filter;
+      });
+      eqNodesRef.current = filters;
+
+      // Setup pseudo Atmos Spatializer (Phase Inversion + Subtle delay for wide stereo)
+      const splitter = ctx.createChannelSplitter(2);
+      const merger = ctx.createChannelMerger(2);
+      const widenerGain = ctx.createGain(); 
+      widenerGain.gain.value = audioFilters.spatialAudio ? 0.7 : 0; 
+      atmosWidenerRef.current = widenerGain;
+
+      const delayLeft = ctx.createDelay(); delayLeft.delayTime.value = 0.015;  // 15ms Haas effect
+      const delayRight = ctx.createDelay(); delayRight.delayTime.value = 0.020; 
+
+      // Connect DSP Line: Source -> EQ0 -> ... -> EQ4
+      source.connect(filters[0]);
+      for (let i = 0; i < filters.length - 1; i++) filters[i].connect(filters[i+1]);
+      
+      const lastEQ = filters[filters.length - 1];
+      
+      // Standard dry path straight to destination
+      lastEQ.connect(ctx.destination);
+      
+      // Wet Spatial Path
+      lastEQ.connect(widenerGain);
+      widenerGain.connect(splitter);
+      splitter.connect(delayLeft, 0); 
+      splitter.connect(delayRight, 1);
+      delayLeft.connect(merger, 0, 0);
+      delayRight.connect(merger, 0, 1);
+      merger.connect(ctx.destination);
+
+      setAudioInitialized(true);
+    } catch (e) { 
+      console.warn("Neural DSP Authorization blocked (Likely CORS related depending on stream):", e); 
+    }
+  };
+
+  // Sync Global Zustand Store Audio Values to the DSP pipeline!
+  useEffect(() => {
+    if (audioInitialized && eqNodesRef.current.length === 5) {
+      eqNodesRef.current.forEach((node, i) => {
+        // Smoothly glide the equalizer parameters over 0.1s to prevent clicking
+        node.gain.setTargetAtTime(audioFilters.bands[i], audioCtxRef.current!.currentTime, 0.1);
+      });
+    }
+    if (audioInitialized && atmosWidenerRef.current) {
+        atmosWidenerRef.current.gain.setTargetAtTime(audioFilters.spatialAudio ? 0.8 : 0, audioCtxRef.current!.currentTime, 0.5);
+    }
+  }, [audioFilters, audioInitialized]);
+
+  // 2. True Canvas Ambilight Logic
   useEffect(() => {
     if (type === 'iframe') return;
     let animationFrameId: number;
     
     const drawAmbilight = () => {
       if (videoRef.current && canvasRef.current && !videoRef.current.paused && !videoRef.current.ended) {
-        const ctx = canvasRef.current.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-        }
+        const ctx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+        if (ctx) ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
       }
       animationFrameId = requestAnimationFrame(drawAmbilight);
     };
 
     const video = videoRef.current;
     if (video) {
-      video.addEventListener('play', drawAmbilight);
-      return () => {
-        video.removeEventListener('play', drawAmbilight);
-        cancelAnimationFrame(animationFrameId);
-      };
+        video.addEventListener('play', drawAmbilight);
+        return () => {
+            video.removeEventListener('play', drawAmbilight);
+            cancelAnimationFrame(animationFrameId);
+        };
     }
   }, [type]);
 
-  // 2. HLS.js Direct Streaming Logic
+  // 3. HLS.js Direct Streaming Logic
   useEffect(() => {
     if (type === 'direct' && src) {
       const video = videoRef.current;
@@ -52,7 +124,10 @@ export function AmbilightPlayer({ src, type }: { src: string, type: 'iframe' | '
         const hls = new Hls({ maxBufferLength: 60, maxMaxBufferLength: 600 });
         hls.loadSource(src);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>console.log("Autoplay prevented")));
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            // Autoplay attempt
+            video.play().catch(() => console.log("Autoplay prevented by browser"));
+        });
         return () => hls.destroy();
       } else if (video && video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = src;
@@ -60,7 +135,7 @@ export function AmbilightPlayer({ src, type }: { src: string, type: 'iframe' | '
     }
   }, [src, type]);
 
-  // 3. WebTorrent P2P Engine Logic
+  // 4. WebTorrent Engine
   const startTorrent = async (magnet: string) => {
     setTorrentStatus('Initializing P2P Swarm...');
     const WebTorrent = (await import('webtorrent')).default;
@@ -79,7 +154,12 @@ export function AmbilightPlayer({ src, type }: { src: string, type: 'iframe' | '
     });
   };
 
-  // Custom Controls Logic
+  const handlePlay = () => {
+    setIsPlaying(true);
+    initializeAudioDSP(); // Must be called after a user gesture!
+    if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
+  };
+
   const togglePlay = () => {
     if (videoRef.current) {
       if (videoRef.current.paused) videoRef.current.play();
@@ -108,15 +188,15 @@ export function AmbilightPlayer({ src, type }: { src: string, type: 'iframe' | '
       ) : (
         <>
           {/* True Canvas Ambilight Layer */}
-          <canvas ref={canvasRef} width="128" height="72" className="absolute inset-0 w-full h-full scale-[1.1] blur-[80px] opacity-70 z-0 pointer-events-none mix-blend-screen transform-gpu" />
+          <canvas ref={canvasRef} width="128" height="72" className="absolute inset-0 w-full h-full scale-[1.1] blur-[80px] opacity-70 z-0 pointer-events-none mix-blend-screen transform-gpu transition-opacity" />
           
-          {/* Native HTML5 Video Element */}
+          {/* Native HTML5 Video Element with CORS allowing audio extraction */}
           <video 
             ref={videoRef} 
             className="absolute inset-0 w-full h-full z-10 rounded-[30px] bg-black object-contain"
             style={{ filter: filterString }}
             onTimeUpdate={handleTimeUpdate}
-            onPlay={() => setIsPlaying(true)}
+            onPlay={handlePlay}
             onPause={() => setIsPlaying(false)}
             crossOrigin="anonymous"
           />
@@ -136,6 +216,8 @@ export function AmbilightPlayer({ src, type }: { src: string, type: 'iframe' | '
           {/* Custom Cinematic Controls Overlay */}
           <div className="absolute inset-0 z-20 flex flex-col justify-end bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6">
             
+            <div className={`absolute bottom-28 right-6 p-2 rounded bg-indigo-600/20 border border-indigo-500 text-indigo-400 text-xs font-black transition-opacity ${audioFilters.spatialAudio ? 'opacity-100' : 'opacity-0'}`}>ATMOS ACTIVE</div>
+
             {/* Scrubber */}
             <div className="w-full h-2 bg-white/20 rounded-full mb-6 cursor-pointer relative overflow-hidden" onClick={(e) => {
                 if(videoRef.current) {
