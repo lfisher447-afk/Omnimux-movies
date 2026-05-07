@@ -4,12 +4,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { SERVERS } from '@/lib/servers';
 import { VideoFilters } from '@/components/VideoFilters';
+import { AudioFilters } from '@/components/AudioFilters';
 import { NicoNicoComments } from '@/components/NicoNicoComments';
-import { EyeOff, Activity, Share2, Server, Star, Calendar, Clock, Loader2, Maximize2, Layers, Users } from 'lucide-react';
+import { Server, Star, Calendar, Clock, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
-// THE FIX: Dynamically import heavy WebRTC/Canvas components so Vercel SSR ignores them!
 const AmbilightPlayer = dynamic(() => import('@/components/AmbilightPlayer').then(mod => mod.AmbilightPlayer), { ssr: false });
 const WebRTCVoice = dynamic(() => import('@/components/WebRTCVoice').then(mod => mod.WebRTCVoice), { ssr: false });
 
@@ -19,7 +19,7 @@ export default function AdvancedPlayerPage({ params }: { params: { id: string } 
   const room = searchParams.get('room');
   const router = useRouter();
   
-  const { addToHistory, spoilerFree, toggleSpoilerFree, themeColor, setThemeColor } = useStore();
+  const { addToHistory, themeColor, setThemeColor } = useStore();
   const [movie, setMovie] = useState<any>(null);
   const[showNico, setShowNico] = useState(false);
   const [serverIdx, setServerIdx] = useState(0);
@@ -50,11 +50,11 @@ export default function AdvancedPlayerPage({ params }: { params: { id: string } 
     <div className={`transition-colors duration-1000 max-w-[1800px] mx-auto px-4 lg:px-8`} style={{ '--theme-color': themeColor } as any}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6 mt-4">
           <div className="flex-1">
-            <h1 className="text-5xl md:text-7xl font-black tracking-tighter drop-shadow-2xl mb-4 text-white">{movie.title || movie.name}</h1>
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter drop-shadow-2xl mb-4 text-white">{movie?.title || movie?.name}</h1>
             <div className="flex flex-wrap items-center gap-3 text-sm font-bold text-gray-300">
-              <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /> {movie.vote_average?.toFixed(1)}</span>
-              <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"><Calendar className="w-4 h-4" /> {movie.release_date || movie.first_air_date}</span>
-              {(movie.runtime || type === 'movie') && <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"><Clock className="w-4 h-4" /> {movie.runtime || 120}m</span>}
+              <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /> {movie?.vote_average?.toFixed(1)}</span>
+              <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"><Calendar className="w-4 h-4" /> {movie?.release_date || movie?.first_air_date}</span>
+              {(movie?.runtime || type === 'movie') && <span className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10"><Clock className="w-4 h-4" /> {movie?.runtime || 120}m</span>}
               <span className="px-4 py-2 uppercase tracking-widest text-[#030508] bg-white font-black rounded-xl">{type}</span>
             </div>
           </div>
@@ -77,7 +77,10 @@ export default function AdvancedPlayerPage({ params }: { params: { id: string } 
             ))}
           </div>
 
-          <VideoFilters />
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6 items-start">
+             <VideoFilters />
+             <AudioFilters />
+          </div>
         </div>
 
         <div className="w-full xl:w-[450px] flex-shrink-0 space-y-8">
@@ -85,7 +88,7 @@ export default function AdvancedPlayerPage({ params }: { params: { id: string } 
                 <WebRTCVoice roomCode={room || `LOBBY-${params.id}`} />
             </div>
 
-            {movie.backdrop_path && (
+            {movie?.backdrop_path && (
                <div className="rounded-[40px] overflow-hidden border border-white/10 relative shadow-2xl h-[300px]">
                  <img src={`https://image.tmdb.org/t/p/w780${movie.backdrop_path}`} className="w-full h-full object-cover grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all duration-700" />
                </div>
