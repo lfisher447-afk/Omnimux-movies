@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 interface Profile { id: string; name: string; avatar: string; pin?: string; hasBiometrics?: boolean; }
 interface VideoFilters { brightness: number; contrast: number; saturation: number; sepia: number; }
+interface AudioFilters { bands: number[]; spatialAudio: boolean; preset: string; }
 
 interface AppState {
   profiles: Profile[];
@@ -10,6 +11,7 @@ interface AppState {
   themeColor: string;
   spoilerFree: boolean;
   videoFilters: VideoFilters;
+  audioFilters: AudioFilters;
   watchlist: any[];
   history: any[];
   stats: { hoursWatched: number, movies: number, episodes: number };
@@ -21,6 +23,7 @@ interface AppState {
   setThemeColor: (color: string) => void;
   toggleSpoilerFree: () => void;
   setVideoFilters: (filters: VideoFilters) => void;
+  setAudioFilters: (filters: Partial<AudioFilters>) => void;
   toggleWatchlist: (m: any) => void;
   addToHistory: (m: any) => void;
   toggleBatterySaver: () => void;
@@ -34,6 +37,7 @@ export const useStore = create<AppState>()(
       themeColor: '#4f46e5',
       spoilerFree: false,
       videoFilters: { brightness: 100, contrast: 100, saturation: 100, sepia: 0 },
+      audioFilters: { bands:[0, 0, 0, 0, 0], spatialAudio: false, preset: 'Flat' },
       watchlist:[], history:[],
       stats: { hoursWatched: 0, movies: 0, episodes: 0 },
       batterySaver: false,
@@ -44,6 +48,7 @@ export const useStore = create<AppState>()(
       setThemeColor: (color) => { set({ themeColor: color }); if(typeof document !== 'undefined') document.documentElement.style.setProperty('--theme-color', color); },
       toggleSpoilerFree: () => set({ spoilerFree: !get().spoilerFree }),
       setVideoFilters: (f) => set({ videoFilters: f }),
+      setAudioFilters: (f) => set({ audioFilters: { ...get().audioFilters, ...f } }),
       toggleBatterySaver: () => set({ batterySaver: !get().batterySaver }),
       
       toggleWatchlist: (m) => {
