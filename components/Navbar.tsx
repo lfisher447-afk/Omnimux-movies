@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Sparkles, Bell, User, Settings, LogOut } from 'lucide-react';
+import { Search, Sparkles, Bell, User, LogOut, Terminal, Globe } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { CommandPalette } from './CommandPalette';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -95,11 +95,18 @@ export function Navbar() {
                                 <p className="text-xs text-indigo-400 font-bold mt-1">Level 42 Operator</p>
                             </div>
                         </div>
+                        {/* --- FIXED: Actionable buttons pointing to the proper system interfaces --- */}
                         <div className="flex flex-col gap-1">
-                            <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 transition-colors text-sm font-bold text-gray-300 hover:text-white"><User className="w-4 h-4"/> Neural Config</button>
-                            <button className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 transition-colors text-sm font-bold text-gray-300 hover:text-white"><Settings className="w-4 h-4"/> Interface Settings</button>
+                            <Link href="/terminal" onClick={() => setActiveDropdown(null)} className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 transition-colors text-sm font-bold text-gray-300 hover:text-white">
+                                <Terminal className="w-4 h-4"/> OS Terminal Config
+                            </Link>
+                            <Link href="/browser" onClick={() => setActiveDropdown(null)} className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 flex items-center gap-3 transition-colors text-sm font-bold text-gray-300 hover:text-white">
+                                <Globe className="w-4 h-4"/> Neural Browser Link
+                            </Link>
                             <div className="w-full h-px bg-white/10 my-1"/>
-                            <button onClick={() => setProfile(null)} className="w-full text-left px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-500 flex items-center gap-3 transition-colors text-sm font-bold"><LogOut className="w-4 h-4"/> Disconnect Link</button>
+                            <button onClick={() => { setProfile(null); setActiveDropdown(null); }} className="w-full text-left px-4 py-3 rounded-xl hover:bg-red-500/20 text-red-500 flex items-center gap-3 transition-colors text-sm font-bold">
+                                <LogOut className="w-4 h-4"/> Disconnect Link
+                            </button>
                         </div>
                         </motion.div>
                     )}
