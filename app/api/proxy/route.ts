@@ -74,11 +74,13 @@ async function handleRequest(req: Request) {
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     responseHeaders.set('Access-Control-Expose-Headers', '*');
     
-    // Strip constraints that prevent target from loading inside our app[
+    // Strip constraints that prevent target from loading inside our app
+    const restrictedHeaders =[
       'X-Frame-Options', 'Content-Security-Policy', 'Strict-Transport-Security', 'Clear-Site-Data', 
       'Cross-Origin-Embedder-Policy', 'Cross-Origin-Opener-Policy', 'Cross-Origin-Resource-Policy', 
       'X-Content-Type-Options'
-    ].forEach(h => responseHeaders.delete(h));
+    ];
+    restrictedHeaders.forEach(h => responseHeaders.delete(h));
 
     // Strip problematic cookie flags allowing cross-domain persistence within proxy boundaries
     let setCookie = responseHeaders.get('set-cookie');
@@ -137,7 +139,7 @@ async function handleRequest(req: Request) {
     // Rewrite srcset natively for responsive/retina images
     html = html.replace(/srcset=["']([^"']+)["']/gi, (match, p1) => {
       const parts = p1.split(',').map((part: string) => {
-        const[url, size] = part.trim().split(/\s+/);
+        const [url, size] = part.trim().split(/\s+/);
         if (!url || url.startsWith('data:') || url.startsWith('blob:')) return part;
         return `${proxyBase}${encodeURIComponent(new URL(url, targetOrigin).href)} ${size || ''}`;
       });
